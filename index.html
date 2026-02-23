@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <title>Picsas Gen – AI Photo Builder | Create Stunning AI Images Online</title>
+  <meta name="description" content="Picsas Gen AI Photo Builder powered by OpenRouter API. Generate high-quality AI images instantly using advanced AI models. Free online AI image generator." />
+  <meta name="keywords" content="AI image generator, AI photo builder, OpenRouter AI, text to image AI, free AI art generator, Picsas Gen AI tool" />
+  <meta name="author" content="Picsas Gen" />
+
+  <!-- Open Graph -->
+  <meta property="og:title" content="Picsas Gen – AI Photo Builder" />
+  <meta property="og:description" content="Generate stunning AI photos instantly with OpenRouter powered AI models." />
+  <meta property="og:type" content="website" />
+
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <header>
+    <h1>Picsas Gen – AI Photo Builder</h1>
+    <p>Create stunning AI-generated images instantly.</p>
+  </header>
+
+  <main>
+    <section class="generator-box">
+      <textarea id="prompt" placeholder="Enter your image prompt here..."></textarea>
+      
+      <select id="modelSelect">
+        <option value="openai/dall-e-3">DALL·E 3</option>
+        <option value="stability-ai/stable-diffusion-xl">Stable Diffusion XL</option>
+      </select>
+
+      <button onclick="generateImage()">Generate Image</button>
+    </section>
+
+    <section class="output">
+      <div id="loading" class="hidden">Generating image...</div>
+      <img id="resultImage" class="hidden" />
+    </section>
+  </main>
+
+  <footer>
+    <p>© 2026 Picsas Gen | Powered by OpenRouter API</p>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>
