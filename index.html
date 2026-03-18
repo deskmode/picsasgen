@@ -1,221 +1,146 @@
-<!DOCTYPE html>
-<html lang="en">
+<!DOCTYPE html><html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>Shadow Survival: Dark Anime Arena</title>
-
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Shadow Anime Survivor</title>
 <style>
 body {
   margin: 0;
   overflow: hidden;
+  background: #0a0a0f;
   font-family: Arial;
-  background: black;
-  color: white;
 }
-
-#menu, #shop {
-  position: absolute;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(black, purple);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
+canvas {
+  display: block;
 }
-
-button {
-  padding: 12px 20px;
-  margin: 10px;
-  font-size: 18px;
-  border: none;
-  border-radius: 10px;
-  background: #ff0055;
-  color: white;
-}
-
-#gameCanvas {
-  display: none;
-  background: black;
-}
-
 #ui {
-  position: absolute;
+  position: fixed;
   top: 10px;
   left: 10px;
-  font-size: 14px;
+  color: white;
+  z-index: 10;
+}
+button {
+  padding: 10px;
+  margin-top: 5px;
 }
 </style>
 </head>
-
 <body>
-
-<div id="menu">
-  <h1>Shadow Survival</h1>
-  <button onclick="startGame('level')">Level Mode</button>
-  <button onclick="startGame('free')">Free Mode</button>
-  <button onclick="openShop()">Shop</button>
+<div id="ui">
+  <div>Coins: <span id="coins">0</span></div>
+  <div>Level: <span id="level">1</span></div>
+  <button onclick="startLevelMode()">Level Mode</button>
+  <button onclick="startEndlessMode()">Endless Mode</button>
 </div>
-
-<div id="shop" style="display:none;">
-  <h2>Shop</h2>
-  <p>Coins: <span id="coinDisplay">0</span></p>
-  <button onclick="buyUpgrade('damage')">Upgrade Damage (20)</button>
-  <button onclick="buyUpgrade('speed')">Upgrade Speed (20)</button>
-  <button onclick="closeShop()">Back</button>
-</div>
-
-<canvas id="gameCanvas"></canvas>
-
-<div id="ui"></div>
-
-<script>
-let canvas = document.getElementById("gameCanvas");
-let ctx = canvas.getContext("2d");
-
+<canvas id="game"></canvas><script>
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
 canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
 
-let gameMode = "level";
-let player, enemies, coins, score, level;
-let touchX = null, touchY = null;
+let player, enemies, coins = 0, level = 1;
+let mode = "menu";
 
-let playerStats = {
-  speed: 3,
-  damage: 1,
-  coins: 0
-};
+class Player {
+  constructor() {
+    this.x = canvas.width/2;
+    this.y = canvas.height/2;
+    this.size = 20;
+    this.speed = 5;
+  }
+  draw() {
+    ctx.fillStyle = "cyan";
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, this.size, 0, Math.PI*2);
+    ctx.fill();
+  }
+  move(dx, dy) {
+    this.x += dx * this.speed;
+    this.y += dy * this.speed;
+  }
+}
 
-function startGame(mode) {
-  gameMode = mode;
-  document.getElementById("menu").style.display = "none";
-  canvas.style.display = "block";
+class Enemy {
+  constructor() {
+    this.x = Math.random()*canvas.width;
+    this.y = Math.random()*canvas.height;
+    this.size = 15;
+    this.speed = 1 + level*0.3;
+  }
+  update() {
+    let dx = player.x - this.x;
+    let dy = player.y - this.y;
+    let dist = Math.sqrt(dx*dx + dy*dy);
+    this.x += dx/dist * this.speed;
+    this.y += dy/dist * this.speed;
+  }
+  draw() {
+    ctx.fillStyle = "red";
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, this.size, 0, Math.PI*2);
+    ctx.fill();
+  }
+}
 
-  player = { x: 200, y: 200, size: 20, hp: 100 };
-  enemies = [];
-  coins = [];
-  score = 0;
+function startLevelMode() {
+  mode = "level";
   level = 1;
+  startGame();
+}
 
+function startEndlessMode() {
+  mode = "endless";
+  startGame();
+}
+
+function startGame() {
+  player = new Player();
+  enemies = [];
   spawnEnemies();
-  gameLoop();
 }
 
 function spawnEnemies() {
   enemies = [];
-  let count = level * 3;
-
-  for (let i = 0; i < count; i++) {
-    enemies.push({
-      x: Math.random() * canvas.width,
-      y: Math.random() * canvas.height,
-      size: 15,
-      speed: 1 + level * 0.3,
-      hp: 2
-    });
+  for(let i=0;i<level+2;i++) {
+    enemies.push(new Enemy());
   }
 }
 
-canvas.addEventListener("touchmove", (e) => {
-  touchX = e.touches[0].clientX;
-  touchY = e.touches[0].clientY;
-});
-
 function update() {
-  if (touchX && touchY) {
-    let dx = touchX - player.x;
-    let dy = touchY - player.y;
-    let dist = Math.sqrt(dx*dx + dy*dy);
+  ctx.clearRect(0,0,canvas.width,canvas.height);
 
-    player.x += (dx/dist) * playerStats.speed;
-    player.y += (dy/dist) * playerStats.speed;
-  }
+  player.draw();
 
   enemies.forEach((e, i) => {
+    e.update();
+    e.draw();
+
     let dx = player.x - e.x;
     let dy = player.y - e.y;
     let dist = Math.sqrt(dx*dx + dy*dy);
 
-    e.x += (dx/dist) * e.speed;
-    e.y += (dy/dist) * e.speed;
-
-    if (dist < 20) {
-      player.hp -= 0.3;
-    }
-
-    if (dist < 30) {
-      e.hp -= playerStats.damage * 0.1;
-      if (e.hp <= 0) {
-        playerStats.coins++;
-        enemies.splice(i, 1);
+    if(dist < player.size + e.size) {
+      if(mode === "level") {
+        alert("Game Over");
+        mode = "menu";
       }
     }
   });
 
-  if (player.hp <= 0 && gameMode === "level") {
-    alert("Game Over");
-    location.reload();
-  }
+  document.getElementById("coins").innerText = coins;
+  document.getElementById("level").innerText = level;
 
-  if (enemies.length === 0 && gameMode === "level") {
-    level++;
-    player.hp = 100;
-    spawnEnemies();
-  }
+  requestAnimationFrame(update);
 }
 
-function draw() {
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
+window.addEventListener("keydown", (e) => {
+  if(e.key === "ArrowUp") player.move(0,-1);
+  if(e.key === "ArrowDown") player.move(0,1);
+  if(e.key === "ArrowLeft") player.move(-1,0);
+  if(e.key === "ArrowRight") player.move(1,0);
+});
 
-  // player
-  ctx.fillStyle = "cyan";
-  ctx.beginPath();
-  ctx.arc(player.x, player.y, player.size, 0, Math.PI*2);
-  ctx.fill();
-
-  // enemies
-  enemies.forEach(e => {
-    ctx.fillStyle = "red";
-    ctx.beginPath();
-    ctx.arc(e.x, e.y, e.size, 0, Math.PI*2);
-    ctx.fill();
-  });
-
-  document.getElementById("ui").innerHTML =
-    "HP: " + Math.floor(player.hp) +
-    " | Coins: " + playerStats.coins +
-    " | Level: " + level;
-}
-
-function gameLoop() {
-  update();
-  draw();
-  requestAnimationFrame(gameLoop);
-}
-
-function openShop() {
-  document.getElementById("menu").style.display = "none";
-  document.getElementById("shop").style.display = "flex";
-  document.getElementById("coinDisplay").innerText = playerStats.coins;
-}
-
-function closeShop() {
-  document.getElementById("shop").style.display = "none";
-  document.getElementById("menu").style.display = "flex";
-}
-
-function buyUpgrade(type) {
-  if (playerStats.coins >= 20) {
-    playerStats.coins -= 20;
-    if (type === "damage") playerStats.damage += 0.5;
-    if (type === "speed") playerStats.speed += 0.5;
-    document.getElementById("coinDisplay").innerText = playerStats.coins;
-  } else {
-    alert("Not enough coins!");
-  }
-}
-</script>
-
-</body>
+update();
+</script></body>
 </html>
